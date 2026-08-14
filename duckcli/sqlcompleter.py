@@ -13,6 +13,7 @@ _logger = logging.getLogger(__name__)
 
 
 class SQLCompleter(Completer):
+
     keywords = [
         "ABORT",
         "ACTION",
@@ -24,6 +25,8 @@ class SQLCompleter(Completer):
         "AND",
         "AS",
         "ASC",
+        "ASOF",
+        "ATTACH",
         "ATTACH",
         "AUTOINCREMENT",
         "BEFORE",
@@ -41,15 +44,17 @@ class SQLCompleter(Completer):
         "CLOB",
         "COLLATE",
         "COLUMN",
+        "COLUMNS",
         "COMMIT",
         "CONFLICT",
         "CONSTRAINT",
+        "COPY",
         "CREATE",
         "CROSS",
-        "CURRENT",
         "CURRENT_DATE",
         "CURRENT_TIME",
         "CURRENT_TIMESTAMP",
+        "CURRENT",
         "DATABASE",
         "DATE",
         "DATETIME",
@@ -58,6 +63,7 @@ class SQLCompleter(Completer):
         "DEFERRABLE",
         "DEFERRED",
         "DELETE",
+        "DETACH",
         "DETACH",
         "DISTINCT",
         "DO",
@@ -69,6 +75,7 @@ class SQLCompleter(Completer):
         "END",
         "ESCAPE",
         "EXCEPT",
+        "EXCLUDE",
         "EXCLUSIVE",
         "EXISTS",
         "EXPLAIN",
@@ -77,6 +84,7 @@ class SQLCompleter(Completer):
         "FLOAT",
         "FOLLOWING",
         "FOR",
+        "FORCE",
         "FOREIGN",
         "FROM",
         "FULL",
@@ -92,6 +100,7 @@ class SQLCompleter(Completer):
         "INITIALLY",
         "INNER",
         "INSERT",
+        "INSTALL",
         "INSTEAD",
         "INT",
         "INT2",
@@ -106,6 +115,8 @@ class SQLCompleter(Completer):
         "LEFT",
         "LIKE",
         "LIMIT",
+        "LOAD",
+        "MACRO",
         "MATCH",
         "MEDIUMINT",
         "NATIVE CHARACTER",
@@ -126,8 +137,13 @@ class SQLCompleter(Completer):
         "ORDER BY",
         "OUTER",
         "OVER",
+        "OVERWRITE",
+        "PARTITION_BY",
         "PARTITION",
+        "PERSIST",
+        "PIVOT",
         "PLAN",
+        "POSITIONAL",
         "PRAGMA",
         "PRECEDING",
         "PRIMARY",
@@ -142,15 +158,19 @@ class SQLCompleter(Completer):
         "RELEASE",
         "RENAME",
         "REPLACE",
+        "REPLACE",
         "RESTRICT",
         "RIGHT",
         "ROLLBACK",
         "ROW",
         "ROWS",
+        "SAMPLE",
         "SAVEPOINT",
+        "SECRET",
         "SELECT",
         "SET",
         "SMALLINT",
+        "SUMMARIZE",
         "TABLE",
         "TEMP",
         "TEMPORARY",
@@ -158,11 +178,13 @@ class SQLCompleter(Completer):
         "THEN",
         "TINYINT",
         "TO",
+        "TO",
         "TRANSACTION",
         "TRIGGER",
         "UNBOUNDED",
         "UNION",
         "UNIQUE",
+        "UNPIVOT",
         "UNSIGNED BIG INT",
         "UPDATE",
         "USING",
@@ -178,6 +200,7 @@ class SQLCompleter(Completer):
         "WITH",
         "WITHOUT",
     ]
+
 
     functions = [
         "ABS",
@@ -248,6 +271,32 @@ class SQLCompleter(Completer):
         "TOTAL",
         "TOTAL_CHANGES",
         "TRIM",
+        "READ_PARQUET",
+        "READ_CSV",
+        "READ_CSV_AUTO",
+        "READ_JSON",
+        "READ_JSON_AUTO",
+        "READ_NDJSON",
+        "READ_NDJSON_AUTO",
+        "READ_BLOB",
+        "READ_TEXT",
+        "PARQUET_METADATA",
+        "PARQUET_SCHEMA",
+        "RANGE",
+        "GENERATE_SERIES",
+        "UNNEST",
+        "GLOB",
+        "DUCKDB_TABLES",
+        "DUCKDB_VIEWS",
+        "DUCKDB_COLUMNS",
+        "DUCKDB_FUNCTIONS",
+        "DUCKDB_TYPES",
+        "DUCKDB_SETTINGS",
+        "DUCKDB_SECRETS",
+        "CURRENT_SETTING",
+        "LIST_TRANSFORM",
+        "LIST_FILTER",
+        "LIST_EXTRACT",
     ]
 
     def __init__(self, supported_formats=(), keyword_casing="auto"):
@@ -255,7 +304,7 @@ class SQLCompleter(Completer):
         self.reserved_words = set()
         for x in self.keywords:
             self.reserved_words.update(x.split())
-        self.name_pattern = compile("^[_a-z][_a-z0-9\$]*$")
+        self.name_pattern = compile(r"^[_a-z][_a-z0-9\$]*$")
 
         self.special_commands = []
         self.table_formats = supported_formats
@@ -270,7 +319,7 @@ class SQLCompleter(Completer):
             or (name.upper() in self.reserved_words)
             or (name.upper() in self.functions)
         ):
-            name = "`%s`" % name
+            name = '"%s"' % name
 
         return name
 

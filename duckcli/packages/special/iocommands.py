@@ -120,7 +120,7 @@ def get_editor_query(sql):
     # The reason we can't simply do .strip('\e') is that it strips characters,
     # not a substring. So it'll strip "e" in the end of the sql also!
     # Ex: "select * from style\e" -> "select * from styl".
-    pattern = re.compile("(^\\\e|\\\e$)")
+    pattern = re.compile(r"(^\\\e|\\\e$)")
     while pattern.search(sql):
         sql = pattern.sub("", sql)
 
@@ -166,7 +166,6 @@ def open_external_editor(filename=None, sql=None):
 
     return (query, message)
 
-
 @special_command(
     "\\f",
     "\\f [name [args..]]",
@@ -179,6 +178,7 @@ def execute_favorite_query(cur, arg, verbose=False, **_):
     if arg == "":
         for result in list_favorite_queries():
             yield result
+        return
 
     """Parse out favorite name and optional substitution parameters"""
     name, _, arg_str = arg.partition(" ")
@@ -195,24 +195,27 @@ def execute_favorite_query(cur, arg, verbose=False, **_):
             cur.execute(sql, args)
             if cur.description:
                 headers = [x[0] for x in cur.description]
-                yield (title, cur, headers, None)
+                rows = cur.fetchall()
+                yield (title, rows, headers, None)
             else:
                 yield (title, None, None, None)
     else:
+        # Only substitute if arguments were provided or query contains substitution variables
         query, arg_error = subst_favorite_query_args(query, args)
         if arg_error:
             yield (None, None, None, arg_error)
-        else:
-            for sql in sqlparse.split(query):
-                sql = sql.rstrip(";")
-                title = "> %s" % (sql) if verbose else None
-                cur.execute(sql)
-                if cur.description:
-                    headers = [x[0] for x in cur.description]
-                    yield (title, cur, headers, None)
-                else:
-                    yield (title, None, None, None)
+            return
 
+        for sql in sqlparse.split(query):
+            sql = sql.rstrip(";")
+            title = "> %s" % (sql) if verbose else None
+            cur.execute(sql)
+            if cur.description:
+                headers = [x[0] for x in cur.description]
+                rows = cur.fetchall()
+                yield (title, rows, headers, None)
+            else:
+                yield (title, None, None, None)
 
 def list_favorite_queries():
     """List of all favorite queries.
@@ -229,29 +232,37 @@ def list_favorite_queries():
 
 
 def subst_favorite_query_args(query, args):
-    """replace positional parameters ($1...$N) in query."""
-    for idx, val in enumerate(args):
-        shell_subst_var = "$" + str(idx + 1)
-        question_subst_var = "?"
-        if shell_subst_var in query:
-            query = query.replace(shell_subst_var, val)
-        elif question_subst_var in query:
-            query = query.replace(question_subst_var, val, 1)
-        else:
-            return [
-                None,
-                "Too many arguments.\nQuery does not have enough place holders to substitute.\n"
-                + query,
-            ]
+    """Substitute positional ($1, $2) or named ($name) parameters in query."""
+    # Find max positional index in query (e.g., $1 -> 1)
+    positional_placeholders = [
+        int(m) for m in re.findall(r"\$([0-9]+)\b", query)
+    ]
+    max_param = max(positional_placeholders) if positional_placeholders else 0
 
-    match = re.search("\\?|\\$\d+", query)
-    if match:
-        return [
-            None,
-            "missing substitution for " + match.group(0) + " in query:\n  " + query,
-        ]
+    # 1. Check for too many positional arguments
+    if len(args) > max_param:
+        # Perform whatever valid replacements exist first
+        for idx in range(1, max_param + 1):
+            query = re.sub(rf"\${idx}\b", str(args[idx - 1]), query)
+        return None, (
+            "Too many arguments.\n"
+            "Query does not have enough place holders to substitute.\n"
+            f"{query}"
+        )
 
-    return [query, None]
+    # 2. Normal positional substitution
+    for idx, val in enumerate(args, start=1):
+        query = re.sub(rf"\${idx}\b", str(val), query)
+
+    # 3. Check for leftover missing parameters ($1, $2, $named)
+    missing = re.findall(r"(\$[0-9]+|\$[a-zA-Z_]\w*)", query)
+    if missing:
+        return None, "missing substitution for %s in query:\n  %s" % (
+            ", ".join(missing),
+            query,
+        )
+
+    return query, None
 
 
 @special_command("\\fs", "\\fs name query", "Save a favorite query.")

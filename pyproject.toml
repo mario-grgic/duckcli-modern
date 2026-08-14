@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "duckcli"
+version = "1.0.0"
+description = "A REPL for DuckDB with auto-completion and syntax highlighting."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0.0",
+    "Pygments>=2.10.0",
+    "prompt_toolkit>=3.0.0,<4.0.0",
+    "sqlparse>=0.4.2",
+    "configobj>=5.0.6",
+    "cli_helpers[auto]>=2.2.1",
+    "duckdb>=1.5.0",
+    "pytz",
+]
+
+[tool.setuptools.package-data]
+duckcli = ["duckclirc"]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov",
+    "mock",
+]
+
+[project.scripts]
+duckcli = "duckcli.main:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["duckcli*"]
+exclude = ["test*", "tests*"]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--capture=sys",
+    "--showlocals",
+    "--doctest-modules",
+    "--doctest-ignore-import-errors",
+    "--ignore=duckcli/magic.py",
+    "--ignore=duckcli/packages/parseutils.py",
+    "--ignore=test/features",
+]

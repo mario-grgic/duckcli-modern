@@ -69,10 +69,10 @@ def test_table_completion(completer, complete_event):
     )
     assert list(result) == list(
         [
-            Completion(text="`réveillé`", start_position=0),
-            Completion(text="`select`", start_position=0),
-            Completion(text="orders", start_position=0),
-            Completion(text="users", start_position=0),
+                Completion(text='"réveillé"', start_position=0),
+                Completion(text='"select"', start_position=0),
+                Completion(text="orders", start_position=0),
+                Completion(text="users", start_position=0),
         ]
     )
 
@@ -86,19 +86,13 @@ def test_function_name_completion(completer, complete_event):
     assert list(result) == list(
         [
             Completion(text="MAX", start_position=-2),
+            Completion(text="MACRO", start_position=-2),
             Completion(text="MATCH", start_position=-2),
         ]
     )
 
 
 def test_suggested_column_names(completer, complete_event):
-    """Suggest column and function names when selecting from table.
-
-    :param completer:
-    :param complete_event:
-    :return:
-
-    """
     text = "SELECT  from users"
     position = len("SELECT ")
     result = list(
@@ -114,11 +108,10 @@ def test_suggested_column_names(completer, complete_event):
             Completion(text="id", start_position=0),
             Completion(text="last_name", start_position=0),
         ]
-        + list(map(Completion, completer.functions))
+        + list(map(Completion, sorted(completer.functions)))
         + [Completion(text="users", start_position=0)]
         + list(map(Completion, sorted(completer.keywords)))
     )
-
 
 def test_suggested_column_names_in_function(completer, complete_event):
     """Suggest column and function names when selecting multiple columns from
@@ -221,7 +214,7 @@ def test_suggested_multiple_column_names(completer, complete_event):
             Completion(text="id", start_position=0),
             Completion(text="last_name", start_position=0),
         ]
-        + list(map(Completion, completer.functions))
+        + list(map(Completion, sorted(completer.functions)))
         + [Completion(text="u", start_position=0)]
         + list(map(Completion, sorted(completer.keywords)))
     )
@@ -351,8 +344,8 @@ def test_table_names_after_from(completer, complete_event):
     )
     assert list(result) == list(
         [
-            Completion(text="`réveillé`", start_position=0),
-            Completion(text="`select`", start_position=0),
+            Completion(text='"réveillé"', start_position=0),
+            Completion(text='"select"', start_position=0),
             Completion(text="orders", start_position=0),
             Completion(text="users", start_position=0),
         ]
@@ -367,18 +360,15 @@ def test_auto_escaped_col_names(completer, complete_event):
             Document(text=text, cursor_position=position), complete_event
         )
     )
-    assert (
-        result
-        == [
-            Completion(text="*", start_position=0),
-            Completion(text="`ABC`", start_position=0),
-            Completion(text="`insert`", start_position=0),
-            Completion(text="id", start_position=0),
-        ]
-        + list(map(Completion, completer.functions))
-        + [Completion(text="`select`", start_position=0)]
-        + list(map(Completion, sorted(completer.keywords)))
-    )
+    assert result == [
+        Completion(text='"ABC"', start_position=0),
+        Completion(text='"insert"', start_position=0),
+        Completion(text="*", start_position=0),
+        Completion(text="id", start_position=0),
+    ] + list(map(Completion, sorted(completer.functions))) + [
+        Completion(text="select", start_position=0)
+    ] + list(map(Completion, sorted(completer.keywords)))
+
 
 
 def test_un_escaped_table_names(completer, complete_event):
@@ -389,17 +379,14 @@ def test_un_escaped_table_names(completer, complete_event):
             Document(text=text, cursor_position=position), complete_event
         )
     )
-    assert result == list(
-        [
-            Completion(text="*", start_position=0),
-            Completion(text="`ABC`", start_position=0),
-            Completion(text="`insert`", start_position=0),
-            Completion(text="id", start_position=0),
-        ]
-        + list(map(Completion, completer.functions))
-        + [Completion(text="réveillé", start_position=0)]
-        + list(map(Completion, sorted(completer.keywords)))
-    )
+    assert result == [
+        Completion(text='"ABC"', start_position=0),
+        Completion(text='"insert"', start_position=0),
+        Completion(text="*", start_position=0),
+        Completion(text="id", start_position=0),
+    ] + list(map(Completion, sorted(completer.functions))) + [
+        Completion(text="réveillé", start_position=0)
+    ] + list(map(Completion, sorted(completer.keywords)))
 
 
 def dummy_list_path(dir_name):

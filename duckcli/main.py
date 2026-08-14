@@ -314,7 +314,7 @@ class DuckCli(object):
             exit(1)
 
     def handle_editor_command(self, text):
-        """Editor command is any query that is prefixed or suffixed by a '\e'.
+        r"""Editor command is any query that is prefixed or suffixed by a '\e'.
         The reason for a while loop is because a user might edit a query
         multiple times. For eg:
 
@@ -366,7 +366,6 @@ class DuckCli(object):
 
         if not self.less_chatty:
             print("Version:", __version__)
-            print("GitHub: https://github.com/dbcli/duckcli")
 
         def get_message():
             prompt = self.get_prompt(self.prompt_format)

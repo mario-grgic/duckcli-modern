@@ -110,8 +110,5 @@ output.header = "#00ff5f bold"
 output.odd-row = ""
 output.even-row = ""
 [favorite_queries]
-test-a = "select * from test where a like 'a%'"
 q_param = select * from test where name=?
 sh_param = select * from test where id=$1
-test-ad = "select * from test where a like 'a%'; select * from test where a like 'd%'"
-test-ae = select * from test

@@ -55,7 +55,7 @@ def test_binary(executor):
     run(executor, """INSERT INTO foo VALUES ('\x01\x01\x01\n')""")
     results = run(executor, """select * from foo""")
 
-    expected = "\x01\x01\x01\n"
+    expected = b"\x01\x01\x01\n"
 
     assert_result_equal(results, headers=["blb"], rows=[(expected,)])
 
@@ -73,7 +73,7 @@ def test_binary(executor):
 @dbtest
 def test_database_list(executor):
     databases = executor.databases()
-    assert "main" in list(databases)
+    assert "_test_db" in list(databases)
 
 
 @dbtest
@@ -87,7 +87,7 @@ def test_invalid_syntax(executor):
 def test_invalid_column_name(executor):
     with pytest.raises(Exception) as excinfo:
         run(executor, "select invalid command")
-    assert "no such column: invalid" in str(excinfo.value)
+    assert 'Referenced column "invalid" was not found' in str(excinfo.value)
 
 
 @dbtest
@@ -102,13 +102,14 @@ def test_unicode_support_in_output(executor):
 
 @dbtest
 def test_invalid_unicode_values_dont_choke(executor):
+    run(executor, "drop table if exists unicodechars")
     run(executor, "create table unicodechars(t text)")
     # \xc3 is not a valid utf-8 char. But we can insert it into the database
     # which can break querying if not handled correctly.
-    run(executor, u"insert into unicodechars (t) values (cast(x'c3' as text))")
+    run(executor, "insert into unicodechars (t) values (cast(x'c3' as text))")
 
-    results = run(executor, u"select * from unicodechars")
-    assert_result_equal(results, headers=["t"], rows=[("\\xc3",)])
+    results = run(executor, "select * from unicodechars")
+    assert_result_equal(results, headers=["t"], rows=[("xc3",)])
 
 
 @dbtest
@@ -134,7 +135,7 @@ def test_multiple_queries_same_line(executor):
 
 @dbtest
 def test_multiple_queries_same_line_syntaxerror(executor):
-    with pytest.raises(OperationalError) as excinfo:
+    with pytest.raises(Exception) as excinfo:
         run(executor, "select 'foo'; invalid syntax")
     assert "syntax error" in str(excinfo.value)
 

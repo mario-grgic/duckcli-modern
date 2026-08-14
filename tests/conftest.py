@@ -13,8 +13,10 @@ def connection():
 
     drop_tables("_test_db")
     connection.close()
-    os.remove("_test_db")
-
+    if os.path.exists("_test_db"):
+        os.remove("_test_db")
+    if os.path.exists("_test_db.wal"):
+        os.remove("_test_db.wal")
 
 @pytest.fixture
 def cursor(connection):
