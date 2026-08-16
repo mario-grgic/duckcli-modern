@@ -147,35 +147,24 @@ def status(cur, **_):
 
 
 @special_command(
-    "describe",
-    "\\d [table]",
-    "Description of a table",
-    arg_type=PARSED_QUERY,
-    case_sensitive=True,
-    aliases=("\\d", "describe", "desc"),
+    "\\d",   # <-- Primary command must be \d, not 'describe'
+    "\\d[+] [table]",
+    "List or describe tables.",
+    aliases=(),  # <-- Keep this empty so 'describe' isn't hijacked
+    case_sensitive=False,
 )
-def describe(cur, arg, **_):
-    if arg:
-        args = (arg,)
-        query = """
-            PRAGMA table_info({})
-        """.format(
-            arg
-        )
+def describe_table(cur, arg=None, **_):  # <-- Changed 'pattern' to 'arg', added **_
+    arg = (arg or "").strip().rstrip(";")
+    if not arg:
+        cur.execute("SHOW TABLES")
     else:
-        raise ArgumentMissing("Table name required.")
+        # Pass directly to DuckDB's DESCRIBE
+        cur.execute(f"DESCRIBE {arg}")
 
-    log.debug(query)
-    cur.execute(query)
-    tables = cur.fetchall()
-    status = ""
     if cur.description:
         headers = [x[0] for x in cur.description]
-    else:
-        return [(None, None, None, "")]
-
-    return [(None, tables, headers, status)]
-
+        return [(None, cur.fetchall(), headers, None)]
+    return [(None, None, None, None)]
 
 @special_command(
     ".read",
